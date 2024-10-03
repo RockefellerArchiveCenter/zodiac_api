@@ -26,9 +26,9 @@ jobs:
           declare -a functions=(${FUNCTIONS})
           for f in "${functions[@]}"
           do
-            cp ${src/${f}.py} basename ${src/${f}.py}
-            cp ${src/helpers.py} basename helpers.py}
-            zip ${LAMBDA_FUNCTION_NAME}.zip ${BASENAME}
+            cp src/${f}.py ${f}.py
+            cp src/helpers.py helpers.py
+            zip ${LAMBDA_FUNCTION_NAME}.zip ${f}.py helpers.py
           done
           
       - name: Configure AWS Credentials
@@ -46,7 +46,7 @@ jobs:
           declare -a functions=(${FUNCTIONS})
           for f in "${functions[@]}"
           do
-            aws s3 cp ${f} s3://${{ secrets.AWS_BUCKET_NAME }}E/$APPLICATION_NAME/${f}.zip
+            aws s3 cp ${f} s3://${{ secrets.AWS_BUCKET_NAME }}/$APPLICATION_NAME/${f}.zip
           done
           
       - name: Deploy to lambda

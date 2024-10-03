@@ -8,9 +8,11 @@ from .helpers import format_response
 table_name = getenv('DYNAMODB_PACKAGE_TABLE')
 dynamo = boto3.resource('dynamodb').Table(table_name)
 
+
 def get_package(package_data):
     try:
-        return dynamo.get_item(Key={'identifier': package_data['identifier']})['Item']
+        return dynamo.get_item(
+            Key={'identifier': package_data['identifier']})['Item']
     except KeyError:
         return {'error': 'Package not found'}, 404
     except Exception as e:

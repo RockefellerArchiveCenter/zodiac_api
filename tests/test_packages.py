@@ -8,7 +8,7 @@ from moto import mock_dynamodb
 
 from src.create_package import create_package
 from src.get_package import get_package
-from src.list_packages import list_packages, lambda_handler
+from src.list_packages import lambda_handler, list_packages
 from src.update_package import update_package
 
 TABLE_NAME = getenv('DYNAMODB_PACKAGE_TABLE')
@@ -20,26 +20,32 @@ def mock_table():
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.create_table(
             TableName=TABLE_NAME,
-            KeySchema=[{'AttributeName': 'identifier','KeyType': 'HASH'}],
-            AttributeDefinitions=[{'AttributeName': 'identifier','AttributeType': 'S'}],
+            KeySchema=[{'AttributeName': 'identifier', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[
+                {'AttributeName': 'identifier', 'AttributeType': 'S'}],
             ProvisionedThroughput={'ReadCapacityUnits': 123, 'WriteCapacityUnits': 123})
         yield table
         # Tests run here
         table.delete()
-        
+
 
 @pytest.fixture
 def package_data():
-    path_to_file = Path("tests", "fixtures", "packages", "f78742e5-6af9-4756-a94a-6cd297406d50.json")
+    path_to_file = Path(
+        "tests",
+        "fixtures",
+        "packages",
+        "f78742e5-6af9-4756-a94a-6cd297406d50.json")
     with open(path_to_file, "r") as read_file:
         data = json.load(read_file)
     return data
 
 
 def test_create_package(package_data, mock_table):
-    """Assert packages """       
+    """Assert packages """
     created = create_package(package_data)
-    response = mock_table.get_item(Key={'identifier':package_data['identifier']})
+    response = mock_table.get_item(
+        Key={'identifier': package_data['identifier']})
     actual_output = response['Item']
     assert actual_output == package_data
     assert created == package_data
@@ -113,4 +119,3 @@ def test_update_package(package_data, mock_table):
 
     response = update_package(package_data)
     assert response['origin'] == 'aurora'
-

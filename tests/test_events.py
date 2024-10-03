@@ -6,8 +6,7 @@ import boto3
 import pytest
 from moto import mock_dynamodb
 
-from src import list_events
-from src import list_package_events
+from src import list_events, list_package_events
 from src.create_event import create_event
 from src.get_event import get_event
 from src.update_event import update_event
@@ -21,26 +20,32 @@ def mock_table():
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.create_table(
             TableName=TABLE_NAME,
-            KeySchema=[{'AttributeName': 'identifier','KeyType': 'HASH'}],
-            AttributeDefinitions=[{'AttributeName': 'identifier','AttributeType': 'S'}],
+            KeySchema=[{'AttributeName': 'identifier', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[
+                {'AttributeName': 'identifier', 'AttributeType': 'S'}],
             ProvisionedThroughput={'ReadCapacityUnits': 123, 'WriteCapacityUnits': 123})
         yield table
         # Tests run here
         table.delete()
-        
+
 
 @pytest.fixture
 def event_data():
-    path_to_file = Path("tests", "fixtures", "events", "f78742e5-6af9-4756-a94a-6cd297406d50.json")
+    path_to_file = Path(
+        "tests",
+        "fixtures",
+        "events",
+        "f78742e5-6af9-4756-a94a-6cd297406d50.json")
     with open(path_to_file, "r") as read_file:
         data = json.load(read_file)
     return data
 
 
 def test_create_event(event_data, mock_table):
-    """Assert events are created as expected."""       
+    """Assert events are created as expected."""
     created = create_event(event_data)
-    response = mock_table.get_item(Key={'identifier':event_data['identifier']})
+    response = mock_table.get_item(
+        Key={'identifier': event_data['identifier']})
     actual_output = response['Item']
     assert actual_output == event_data
     assert created == event_data
@@ -80,7 +85,8 @@ def test_list_events(event_data, mock_table):
     response = list_events.list_events('completed')
     assert len(response) == 2
 
-    response = list_events.lambda_handler({'rawPath': '/events/completed/'}, None)
+    response = list_events.lambda_handler(
+        {'rawPath': '/events/completed/'}, None)
     assert len(response['body']) == 2
 
     response = list_events.list_events('errored')
@@ -98,13 +104,15 @@ def test_list_events(event_data, mock_table):
     response = list_events.list_events('in progress')
     assert len(response) == 1
 
-    response = list_events.lambda_handler({'rawPath': '/events/in-progress'}, None)
+    response = list_events.lambda_handler(
+        {'rawPath': '/events/in-progress'}, None)
     assert len(response['body']) == 1
 
     response = list_events.list_events('fake status')
     assert len(response) == 0
 
-    response = list_events.lambda_handler({'rawPath': '/events/fake-status'}, None)
+    response = list_events.lambda_handler(
+        {'rawPath': '/events/fake-status'}, None)
     assert len(response['body']) == 0
 
 
@@ -119,17 +127,19 @@ def test_list_package_events(event_data, mock_table):
         mock_table.put_item(Item=event_data)
     response = list_package_events.list_package_events()
     assert len(response) == 3
-    
+
     response = list_package_events.list_package_events('a')
     assert len(response) == 1
 
-    response = list_package_events.lambda_handler({'rawPath': '/packages/a/events'}, None)
+    response = list_package_events.lambda_handler(
+        {'rawPath': '/packages/a/events'}, None)
     assert len(response['body']) == 1
 
     response = list_package_events.list_package_events('b')
     assert len(response) == 2
 
-    response = list_package_events.lambda_handler({'rawPath': '/packages/b/events'}, None)
+    response = list_package_events.lambda_handler(
+        {'rawPath': '/packages/b/events'}, None)
     assert len(response['body']) == 2
 
 
@@ -140,4 +150,3 @@ def test_update_event(event_data, mock_table):
 
     response = update_event(event_data)
     assert response['outcome'] == 'failure'
-

@@ -12,7 +12,8 @@ dynamo = boto3.resource('dynamodb').Table(table_name)
 def create_event(event_data):
     try:
         dynamo.put_item(Item=event_data)
-        return dynamo.get_item(Key={'identifier': event_data['identifier']})['Item']
+        return dynamo.get_item(
+            Key={'identifier': event_data['identifier']})['Item']
     except Exception as e:
         return {'error': ''.join(traceback.format_exception(e)[:-1])}, 500
 

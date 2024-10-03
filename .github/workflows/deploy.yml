@@ -29,7 +29,8 @@ jobs:
           declare -a functions=(${FUNCTIONS})
           for f in "${functions[@]}"
           do
-            sudo deploy_scripts/make_zip_lambda.sh ${f} src/${f}.py src/helpers.py
+            echo $f
+            # sudo deploy_scripts/make_zip_lambda.sh ${f} src/${f}.py src/helpers.py
           done
           
       - name: Configure AWS Credentials

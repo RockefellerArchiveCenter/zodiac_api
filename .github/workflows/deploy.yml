@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - development
+      - base
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref_name }}
+
+    env:
+      APPLICATION_NAME: zodiac_api
+      FUNCTIONS: create_event create_package get_event get_package list_events list_packages list_package_events update_event update_package ping
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Clone deploy scripts if not present
+        run: git clone https://github.com/RockefellerArchiveCenter/deploy_scripts.git;
+
+      - name: Create deployment zip files
+        run: |
+          declare -a functions=(${FUNCTIONS})
+          for f in "${functions[@]}"
+          do
+            sudo deploy_scripts/make_zip_lambda.sh ${f} src/${f}.py src/helpers.py
+          done
+          
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          role-skip-session-tagging: true
+          role-duration-seconds: 900
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload to S3
+        run: |
+          declare -a functions=(${FUNCTIONS})
+          for f in "${functions[@]}"
+          do
+            aws s3 cp ${f} s3://${{ secrets.AWS_BUCKET_NAME }}E/$APPLICATION_NAME/${f}.zip
+          done
+          
+      - name: Deploy to lambda
+        run: |
+          declare -a functions=(${FUNCTIONS})
+          for f in "${functions[@]}"
+          do
+          aws lambda update-function-code \
+            --function-name arn:aws:lambda:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID}}:function:${APPLICATION_NAME}_${f} \
+            --zip-file fileb://${f}.zip
+          done

@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Zodiac API 
+  
+  API to support user intervace for Zodiac
+
+Parameters:
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which the application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  CreateEventLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for creating events
+  CreatePackageLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for creating packages
+  GetEventLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for getting an event
+  GetPackageLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for getting a package
+  ListEventsLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for listing events
+  ListPackagesLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for listing packages
+  ListPackageEventsLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for listing package events
+  UpdateEventLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for updating events
+  UpdatePackageLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for updating packages
+  PingtLambda:
+    Type: AWS::Lambda::Function
+    Description: Lambda for ping response
+
+
+Resources:
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: MyRESTApi
+
+  EventsListResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      PathPart: 'events'
+
+  EventsResourcePost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref EventsListResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateEventLambda.Arn}/invocations
+
+  EventsResourceGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref EventsListResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListEventsLambda.Arn}/invocations
+
+  EventsDetailResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EventsListResource
+      RestApiId: !Ref ApiGateway
+      PathPart: '{event_id+}'
+
+  EventsDetailResourceGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref EventsDetailResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetEventLambda.Arn}/invocations
+  
+  EventsDetailResourcePut:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref EventsDetailResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: PUT
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateEventLambda.Arn}/invocations
+
+  PackagesListResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      PathPart: 'packages'
+
+  PackagesListResourcePost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref PackagesListResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreatePackageLambda.Arn}/invocations
+
+  PackagesListResourceGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref PackagesListResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListPackagesLambda.Arn}/invocations
+
+  PackagesDetailResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref PackagesListResource
+      RestApiId: !Ref ApiGateway
+      PathPart: '{package_id}'
+
+  PackagesDetailResourceGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref PackagesDetailResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetPackageLambda.Arn}/invocations
+  
+  PackagesDetailResourcePut:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref PackagesDetailResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: PUT
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdatePackageLambda.Arn}/invocations
+
+  PackageEventsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref PackagesDetailResource
+      RestApiId: !Ref ApiGateway
+      PathPart: 'events'
+
+  PackageEventsResourceGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref PackageEventsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetPackageEventsLambda.Arn}/invocations

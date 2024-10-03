@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Zodiac API 
+  
+  API to support user intervace for Zodiac
+
+Parameters:
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which the application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+    Default: dev
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+    Default: zodiac_api
+
+Mappings:
+  DeployResources:
+    CloudFormationBucket:
+      dev: rac-dev-cloudformation-apps
+      prod: rac-prod-cloudformation-apps
+    CloudFormationBucketPrefix:
+      dev: zodiac_api
+      prod: zodiac_api
+
+Resources:
+  LambdaFunctions:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref ApplicationEnvironment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref ApplicationEnvironment],
+          "zodiac_api_lambdas_template.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref ApplicationEnvironment
+        ApplicationName: !Ref ApplicationName
+        DynamoEventTableName: !GetAtt Database.Outputs.DynamoEventTableName
+        DynamoPackageTableName: !GetAtt Database.Outputs.DynamoPackageTableName
+        DynamoEventTableArn: !GetAtt Database.Outputs.DynamoEventTableArn
+        DynamoPackageTableArn: !GetAtt Database.Outputs.DynamoPackageTableArn
+
+
+  ApiGateway:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref ApplicationEnvironment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref ApplicationEnvironment],
+          "zodiac_api_api_gateway_template.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref ApplicationEnvironment
+        ApplicationName: !Ref ApplicationName
+        CreateEventLambda: !GetAtt LambdaFunctions.Outputs.CreateEventLambda
+        CreatePackageLambda: !GetAtt LambdaFunctions.Outputs.CreatePackageLambda
+        GetEventLambda: !GetAtt LambdaFunctions.Outputs.GetEventLambda
+        GetPackageLambda: !GetAtt LambdaFunctions.Outputs.GetPackageLambda
+        ListEventsLambda: !GetAtt LambdaFunctions.Outputs.ListEventsLambda
+        ListPackagesLambda: !GetAtt LambdaFunctions.Outputs.ListPackagesLambda
+        ListPackageEventsLambda: !GetAtt LambdaFunctions.Outputs.ListPackageEventsLambda
+        UpdateEventLambda: !GetAtt LambdaFunctions.Outputs.UpdateEventLambda
+        UpdatePackageLambda: !GetAtt LambdaFunctions.Outputs.UpdatePackageLambda
+        PingtLambda: !GetAtt LambdaFunctions.Outputs.PingtLambda
+
+  Database:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL:
+        !Join ["/", 
+          [
+          "https://s3.amazonaws.com",
+          !FindInMap [DeployResources, CloudFormationBucket, !Ref ApplicationEnvironment],
+          !FindInMap [DeployResources, CloudFormationBucketPrefix, !Ref ApplicationEnvironment],
+          "zodiac_api_database_template.yaml"
+          ]
+        ]
+      Parameters:
+        ApplicationEnvironment: !Ref ApplicationEnvironment
+        ApplicationName: !Ref ApplicationName
+        DynamoEventTableName: !Sub 'rac-${ApplicationEnvironment}-${ApplicationName}-events'
+        DynamoPackageTableName: !Sub 'rac-${ApplicationEnvironment}-${ApplicationName}-packages'

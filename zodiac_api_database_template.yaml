@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Zodiac API 
+  
+  API to support user intervace for Zodiac
+
+Parameters:
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which the application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  DynamoEventTableName:
+    Type: String
+    Description: Name of DynamoDB table for event data
+  DynamoPackageTableName:
+    Type: String
+    Description: Name of DynamoDB table for package data
+
+Resources:
+  PackageTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: 'identifier'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'identifier'
+          KeyType: 'HASH'
+      ProvisionedThroughput: 
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
+      TableName: !Ref DynamoPackageTableName
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  EventTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: 'identifier'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'identifier'
+          KeyType: 'HASH'
+      ProvisionedThroughput: 
+        ReadCapacityUnits: '5'
+        WriteCapacityUnits: '5'
+      TableName: !Ref DynamoEventTableName
+      Tags:
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+Outputs:
+  DynamoEventTableArn:
+    Description: Dynamo DB event table ARN
+    Value: !GetAtt EventTable.Arn
+  DynamoEventTableName:
+    Description: Dynamo DB event table name
+    Value: !Ref EventTable
+  DynamoPackageTableArn:
+    Description: Dynamo DB package table ARN
+    Value: !GetAtt PackageTable.Arn
+  DynamoPackageTableName:
+    Description: Dynamo DB package table name
+    Value: !Ref PackageTable

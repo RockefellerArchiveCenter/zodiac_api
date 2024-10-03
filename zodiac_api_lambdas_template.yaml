@@ -1,0 +1,345 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Zodiac API 
+  
+  API to support user intervace for Zodiac
+
+Parameters:
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which the application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  DynamoEventTableName:
+    Type: String
+    Description: Name of the Dynamo DB table for events
+  DynamoPackageTableName:
+    Type: String
+    Description: Name of the Dynamo DB table for packages
+  DynamoEventTableArn:
+    Type: String
+    Description: ARN of the Dynamo DB table for events
+  DynamoPackageTableArn:
+    Type: String
+    Description: ARN of the Dynamo DB table for packages
+
+Resources:
+  ZodiacApiLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ApplicationName}"
+      RetentionInDays: 90
+
+  ZodiacApiLambaExectionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ZodiacApiLambaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource:
+                  - !GetAtt ZodiacApiLambdaLogGroup.Arn
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:Query'
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:UpdateItem'
+                Resource: 
+                  - !Ref DynamoPackageTableArn
+                  - !Ref DynamoEventTableArn
+    
+  ZodiacApiCreateEventLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/create_event.zip'
+      FunctionName: !Sub '${ApplicationName}_create_event'
+      Handler: create_event.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_EVENT_TABLE:
+            !Ref DynamoEventTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiCreatePackageLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/create_package.zip'
+      FunctionName: !Sub '${ApplicationName}_create_package'
+      Handler: create_package.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_PACKAGE_TABLE: !Ref DynamoPackageTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiGetEventLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/get_event.zip'
+      FunctionName: !Sub '${ApplicationName}_get_event'
+      Handler: get_event.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_EVENT_TABLE:
+            Ref: DynamoEventTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiGetPackageLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/get_package.zip'
+      FunctionName: !Sub '${ApplicationName}_get_package'
+      Handler: get_package.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_PACKAGE_TABLE: !Ref DynamoPackageTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiListEventsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/list_events.zip'
+      FunctionName: !Sub '${ApplicationName}_list_events'
+      Handler: list_events.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_EVENT_TABLE: !Ref DynamoEventTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiListPackagesLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/list_packages.zip'
+      FunctionName: !Sub '${ApplicationName}_list_packages'
+      Handler: list_packages.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_PACKAGE_TABLE: !Ref DynamoPackageTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiListPackageEventsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/list_package_events.zip'
+      FunctionName: !Sub '${ApplicationName}_list_package_events'
+      Handler: list_package_events.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_EVENT_TABLE: !Ref DynamoEventTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiUpdateEventLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/update_event.zip'
+      FunctionName: !Sub '${ApplicationName}_update_event'
+      Handler: update_event.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_EVENT_TABLE: !Ref DynamoEventTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiUpdatePackageLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/update_package.zip'
+      FunctionName: !Sub '${ApplicationName}_update_package'
+      Handler: update_package.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_PACKAGE_TABLE: !Ref DynamoPackageTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  ZodiacApiPingLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub 'rac-${ApplicationEnvironment}-lambda'
+        S3Key: !Sub '${ApplicationName}/ping.zip'
+      FunctionName: !Sub '${ApplicationName}_ping'
+      LoggingConfig:
+        LogGroup: !Ref ZodiacApiLambdaLogGroup
+      Handler: ping.lambda_handler
+      Role: !GetAtt ZodiacApiLambaExectionRole.Arn
+      Runtime: python3.11
+      Timeout: 10
+      Environment:
+        Variables:
+          DYNAMO_PACKAGE_TABLE: !Ref DynamoPackageTableName
+      Architectures:
+        - x86_64
+      Tags: 
+        - Key: Environment
+          Value: !Ref ApplicationEnvironment
+        - Key: Application
+          Value: !Ref ApplicationName
+
+Outputs:
+  CreateEventLambda:
+    Description: Lambda for creating events
+    Value: !Ref ZodiacApiCreateEventLambda
+  CreatePackageLambda:
+    Description: Lambda for creating packages
+    Value: !Ref ZodiacApiCreatePackageLambda
+  GetEventLambda:
+    Description: Lambda for getting an event
+    Value: !Ref ZodiacApiGetEventLambda
+  GetPackageLambda:
+    Description: Lambda for getting a package
+    Value: !Ref ZodiacApiGetPackageLambda
+  ListEventsLambda:
+    Description: Lambda for listing events
+    Value: !Ref ZodiacApiListEventsLambda
+  ListPackagesLambda:
+    Description: Lambda for listing packages
+    Value: !Ref ZodiacApiListPackagesLambda
+  ListPackageEventsLambda:
+    Description: Lambda for listing package events
+    Value: !Ref ZodiacApiListPackageEventsLambda
+  UpdateEventLambda:
+    Description: Lambda for updating events
+    Value: !Ref ZodiacApiUpdateEventLambda
+  UpdatePackageLambda:
+    Description: Lambda for updating packages
+    Value: !Ref ZodiacApiUpdatePackageLambda
+  PingLambda:
+    Description: Lambda for ping response
+    Value: !Ref ZodiacApiPingLambda

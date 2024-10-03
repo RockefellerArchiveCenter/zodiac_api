@@ -28,8 +28,9 @@ jobs:
           do
             cp src/${f}.py ${f}.py
             cp src/helpers.py helpers.py
-            zip ${LAMBDA_FUNCTION_NAME}.zip ${f}.py helpers.py
+            zip ${f}.zip ${f}.py helpers.py
           done
+          ls
           
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2

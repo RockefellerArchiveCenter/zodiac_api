@@ -21,16 +21,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Clone deploy scripts if not present
-        run: git clone https://github.com/RockefellerArchiveCenter/deploy_scripts.git;
-
       - name: Create deployment zip files
         run: |
           declare -a functions=(${FUNCTIONS})
           for f in "${functions[@]}"
           do
-            echo $f
-            # sudo deploy_scripts/make_zip_lambda.sh ${f} src/${f}.py src/helpers.py
+            cp ${src/${f}.py} basename ${src/${f}.py}
+            cp ${src/helpers.py} basename helpers.py}
+            zip ${LAMBDA_FUNCTION_NAME}.zip ${BASENAME}
           done
           
       - name: Configure AWS Credentials

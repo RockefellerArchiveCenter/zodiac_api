@@ -15,7 +15,7 @@ jobs:
 
     env:
       APPLICATION_NAME: zodiac_api
-      FUNCTIONS: create_event create_package get_event get_package list_events list_packages list_package_events update_event update_package ping
+      FUNCTIONS: create_event create_package get_event get_package list_events list_packages list_package_events update_event update_package
 
     steps:
       - name: Checkout code
@@ -26,11 +26,11 @@ jobs:
           declare -a functions=(${FUNCTIONS})
           for f in "${functions[@]}"
           do
-            cp src/${f}.py ${f}.py
-            cp src/helpers.py helpers.py
-            zip ${f}.zip ${f}.py helpers.py
+            mkdir service
+            cp src/{${f}.py,helpers.py,__init__.py} service
+            zip -r ${f}.zip service/
+            rm -r service
           done
-          ls
           
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2

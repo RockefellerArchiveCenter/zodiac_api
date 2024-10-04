@@ -63,16 +63,15 @@ Resources:
       Parameters:
         ApplicationEnvironment: !Ref ApplicationEnvironment
         ApplicationName: !Ref ApplicationName
-        CreateEventLambda: !GetAtt LambdaFunctions.Outputs.CreateEventLambda
-        CreatePackageLambda: !GetAtt LambdaFunctions.Outputs.CreatePackageLambda
-        GetEventLambda: !GetAtt LambdaFunctions.Outputs.GetEventLambda
-        GetPackageLambda: !GetAtt LambdaFunctions.Outputs.GetPackageLambda
-        ListEventsLambda: !GetAtt LambdaFunctions.Outputs.ListEventsLambda
-        ListPackagesLambda: !GetAtt LambdaFunctions.Outputs.ListPackagesLambda
-        ListPackageEventsLambda: !GetAtt LambdaFunctions.Outputs.ListPackageEventsLambda
-        UpdateEventLambda: !GetAtt LambdaFunctions.Outputs.UpdateEventLambda
-        UpdatePackageLambda: !GetAtt LambdaFunctions.Outputs.UpdatePackageLambda
-        PingtLambda: !GetAtt LambdaFunctions.Outputs.PingtLambda
+        CreateEventLambdaArn: !GetAtt LambdaFunctions.Outputs.CreateEventLambdaArn
+        CreatePackageLambdaArn: !GetAtt LambdaFunctions.Outputs.CreatePackageLambdaArn
+        GetEventLambdaArn: !GetAtt LambdaFunctions.Outputs.GetEventLambdaArn
+        GetPackageLambdaArn: !GetAtt LambdaFunctions.Outputs.GetPackageLambdaArn
+        ListEventsLambdaArn: !GetAtt LambdaFunctions.Outputs.ListEventsLambdaArn
+        ListPackagesLambdaArn: !GetAtt LambdaFunctions.Outputs.ListPackagesLambdaArn
+        ListPackageEventsLambdaArn: !GetAtt LambdaFunctions.Outputs.ListPackageEventsLambdaArn
+        UpdateEventLambdaArn: !GetAtt LambdaFunctions.Outputs.UpdateEventLambdaArn
+        UpdatePackageLambdaArn: !GetAtt LambdaFunctions.Outputs.UpdatePackageLambdaArn
 
   Database:
     Type: "AWS::CloudFormation::Stack"

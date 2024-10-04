@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Zodiac API 
+  Zodiac API Database
   
-  API to support user intervace for Zodiac
+  Database for API to support user intervace for Zodiac
 
 Parameters:
   ApplicationEnvironment:

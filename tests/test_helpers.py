@@ -1,3 +1,5 @@
+import json
+
 from src.helpers import format_response, parse_update
 
 
@@ -19,12 +21,12 @@ def test_format_response():
     # with response code
     body = "Request successful!"
     output = format_response(body)
-    assert output['body'] == body
+    assert output['body'] == json.dumps(body)
     assert output['statusCode'] == 200
 
     # without response code
     body = {"error": "There was a problem with your request."}
     status_code = 500
     output = format_response(body, status_code)
-    assert output['body'] == body
+    assert output['body'] == json.dumps(body)
     assert output['statusCode'] == status_code

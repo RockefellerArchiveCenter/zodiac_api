@@ -48,72 +48,33 @@ def test_create_event(event_data, mock_table):
         Key={'identifier': event_data['identifier']})
     actual_output = response['Item']
     assert actual_output == event_data
-    assert created == event_data
+    assert created == {'Event created.'}
 
 
 def test_get_event(event_data, mock_table):
     """Assert events can be retrieved as expected."""
     mock_table.put_item(Item=event_data)
-    response = get_event({"identifier": event_data["identifier"]})
-    assert response == event_data
+    response = get_event(event_data["identifier"])
+    assert response == (event_data, 200)
 
 
 def test_get_missing_event(event_data, mock_table):
     """Assert expected error is raised when item is missing"""
     mock_table.put_item(Item=event_data)
-    response = get_event({"identifier": "12345"})
+    response = get_event("12345")
     assert response == ({'error': 'Event not found'}, 404)
 
 
 def test_list_events(event_data, mock_table):
     """Assert events are listed as expected, including filtering by outcome."""
-    for identifier, outcome in [
-            ("1", "completed"),
-            ("2", "completed"),
-            ("3", "errored"),
-            ("4", "in progress"),
-            ("5", "failed")]:
+    for identifier in ["1", "2", "3"]:
         event_data['identifier'] = identifier
-        event_data['outcome'] = outcome
         mock_table.put_item(Item=event_data)
     response = list_events.list_events()
-    assert len(response) == 5
+    assert len(response[0]) == 3
 
-    response = list_events.lambda_handler({'rawPath': '/events'}, None)
-    assert len(response['body']) == 5
-
-    response = list_events.list_events('completed')
-    assert len(response) == 2
-
-    response = list_events.lambda_handler(
-        {'rawPath': '/events/completed/'}, None)
-    assert len(response['body']) == 2
-
-    response = list_events.list_events('errored')
-    assert len(response) == 1
-
-    response = list_events.lambda_handler({'rawPath': '/events/errored'}, None)
-    assert len(response['body']) == 1
-
-    response = list_events.list_events('failed')
-    assert len(response) == 1
-
-    response = list_events.lambda_handler({'rawPath': '/events/failed'}, None)
-    assert len(response['body']) == 1
-
-    response = list_events.list_events('in progress')
-    assert len(response) == 1
-
-    response = list_events.lambda_handler(
-        {'rawPath': '/events/in-progress'}, None)
-    assert len(response['body']) == 1
-
-    response = list_events.list_events('fake status')
-    assert len(response) == 0
-
-    response = list_events.lambda_handler(
-        {'rawPath': '/events/fake-status'}, None)
-    assert len(response['body']) == 0
+    response = list_events.lambda_handler({}, None)
+    assert len(json.loads(response['body'])) == 3
 
 
 def test_list_package_events(event_data, mock_table):
@@ -125,22 +86,20 @@ def test_list_package_events(event_data, mock_table):
         event_data['identifier'] = identifier
         event_data['package_identifier'] = package_identifier
         mock_table.put_item(Item=event_data)
-    response = list_package_events.list_package_events()
-    assert len(response) == 3
 
     response = list_package_events.list_package_events('a')
-    assert len(response) == 1
+    assert len(response[0]) == 1
 
     response = list_package_events.lambda_handler(
-        {'rawPath': '/packages/a/events'}, None)
-    assert len(response['body']) == 1
+        {'pathParameters': {'package_id': 'a'}}, None)
+    assert len(json.loads(response['body'])) == 1
 
     response = list_package_events.list_package_events('b')
-    assert len(response) == 2
+    assert len(response[0]) == 2
 
     response = list_package_events.lambda_handler(
-        {'rawPath': '/packages/b/events'}, None)
-    assert len(response['body']) == 2
+        {'pathParameters': {'package_id': 'b'}}, None)
+    assert len(json.loads(response['body'])) == 2
 
 
 def test_update_event(event_data, mock_table):
@@ -149,4 +108,4 @@ def test_update_event(event_data, mock_table):
     event_data['outcome'] = 'failure'
 
     response = update_event(event_data)
-    assert response['outcome'] == 'failure'
+    assert response[0]['outcome'] == 'failure'

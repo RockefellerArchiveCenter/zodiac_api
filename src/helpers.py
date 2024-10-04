@@ -1,3 +1,4 @@
+import json
 
 
 def format_response(body, status_code=200):
@@ -5,7 +6,7 @@ def format_response(body, status_code=200):
         "isBase64Encoded": False,
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json"},
-        "body": body
+        "body": json.dumps(body)
     }
 
 

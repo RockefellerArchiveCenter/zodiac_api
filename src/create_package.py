@@ -1,3 +1,4 @@
+import json
 import traceback
 from os import getenv
 
@@ -12,11 +13,11 @@ dynamo = boto3.resource('dynamodb').Table(table_name)
 def create_package(package_data):
     try:
         dynamo.put_item(Item=package_data)
-        return dynamo.get_item(
-            Key={'identifier': package_data['identifier']})['Item']
+        return {'Package created.'}
     except Exception as e:
         return {'error': ''.join(traceback.format_exception(e)[:-1])}, 500
 
 
 def lambda_handler(event, context):
-    return format_response(create_package(event['body']))
+    package_data = json.loads(event['body'])
+    return format_response(*create_package(package_data))

@@ -9,10 +9,9 @@ table_name = getenv('DYNAMODB_EVENT_TABLE')
 dynamo = boto3.resource('dynamodb').Table(table_name)
 
 
-def get_event(event_data):
+def get_event(event_id):
     try:
-        return dynamo.get_item(
-            Key={'identifier': event_data['identifier']})['Item']
+        return dynamo.get_item(Key={'identifier': event_id})['Item'], 200
     except KeyError:
         return {'error': 'Event not found'}, 404
     except Exception as e:
@@ -20,4 +19,5 @@ def get_event(event_data):
 
 
 def lambda_handler(event, context):
-    return format_response(get_event(event))
+    event_id = event['pathParameters']['event_id']
+    return format_response(*get_event(event_id))

@@ -14,6 +14,10 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
+  StageName:
+    Type: String
+    Default: v1
+    Description: Name of API stage.
   CreateEventLambdaArn:
     Type: String
     Description: Arn for Lambda for creating events
@@ -43,22 +47,22 @@ Parameters:
     Description: Arn for Lambda for updating packages
 
 Resources:
-  ApiGateway:
+  ZodiacApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: ZodiacApiGateway
+      Name: ZodiacApi
 
   EventsListResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !GetAtt ApiGateway.RootResourceId
-      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ZodiacApi.RootResourceId
+      RestApiId: !Ref ZodiacApi
       PathPart: 'events'
 
-  EventsResourcePost:
+  EventsListResourcePost:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref EventsListResource
       HttpMethod: POST
       AuthorizationType: NONE
@@ -68,18 +72,18 @@ Resources:
         Uri: !Sub >-
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateEventLambdaArn}/invocations
 
-  EventsResourcePostPermission:
+  EventsListResourcePostPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref CreateEventLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/POST/events'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/POST/events'
 
-  EventsResourceGet:
+  EventsListResourceGet:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref EventsListResource
       HttpMethod: GET
       AuthorizationType: NONE
@@ -89,25 +93,25 @@ Resources:
         Uri: !Sub >-
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListEventsLambdaArn}/invocations
 
-  EventsResourceGetPermission:
+  EventsListResourceGetPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref ListEventsLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/events'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/GET/events'
 
   EventsDetailResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref EventsListResource
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       PathPart: '{event_id}'
 
   EventsDetailResourceGet:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref EventsDetailResource
       HttpMethod: GET
       AuthorizationType: NONE
@@ -123,12 +127,12 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref GetEventLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/events/{event_id}'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/GET/events/{event_id}'
   
   EventsDetailResourcePut:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref EventsDetailResource
       HttpMethod: PUT
       AuthorizationType: NONE
@@ -144,19 +148,19 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref UpdateEventLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/PUT/events/{event_id}'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/PUT/events/{event_id}'
 
   PackagesListResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !GetAtt ApiGateway.RootResourceId
-      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ZodiacApi.RootResourceId
+      RestApiId: !Ref ZodiacApi
       PathPart: 'packages'
 
   PackagesListResourcePost:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref PackagesListResource
       HttpMethod: POST
       AuthorizationType: NONE
@@ -172,12 +176,12 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref CreatePackageLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/POST/packages'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/POST/packages'
 
   PackagesListResourceGet:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref PackagesListResource
       HttpMethod: GET
       AuthorizationType: NONE
@@ -193,19 +197,19 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref ListPackagesLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/packages'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/GET/packages'
 
   PackagesDetailResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref PackagesListResource
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       PathPart: '{package_id}'
 
   PackagesDetailResourceGet:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref PackagesDetailResource
       HttpMethod: GET
       AuthorizationType: NONE
@@ -221,12 +225,12 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref GetPackageLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/packages/{package_id}'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/GET/packages/{package_id}'
 
   PackagesDetailResourcePut:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref PackagesDetailResource
       HttpMethod: PUT
       AuthorizationType: NONE
@@ -242,19 +246,19 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref UpdatePackageLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/PUT/packages/{package_id}'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/PUT/packages/{package_id}'
 
   PackageEventsResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref PackagesDetailResource
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       PathPart: 'events'
 
   PackageEventsResourceGet:
     Type: 'AWS::ApiGateway::Method'
     Properties:
-      RestApiId: !Ref ApiGateway
+      RestApiId: !Ref ZodiacApi
       ResourceId: !Ref PackageEventsResource
       HttpMethod: GET
       AuthorizationType: NONE
@@ -270,4 +274,19 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref ListPackageEventsLambdaArn
       Principal: 'apigateway.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/GET/packages/{package_id}/events'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ZodiacApi}/*/GET/packages/{package_id}/events'
+
+  ApiDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    DependsOn:
+      - EventsListResourceGet
+      - EventsListResourcePost
+      - EventsDetailResourceGet
+      - EventsDetailResourcePut
+      - PackagesListResourceGet
+      - PackagesListResourcePost
+      - PackagesDetailResourceGet
+      - PackagesDetailResourcePut
+    Properties:
+      RestApiId: !Ref ZodiacApi
+      StageName: !Sub '${StageName}'
